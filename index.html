@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Tracker</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #9333ea, #c084fc);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 40px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    .welcome {
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin: 30px 0;
+    }
+    .uid {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+    .status {
+      font-size: 3rem;
+      font-weight: bold;
+      margin: 30px 0;
+    }
+    .timer {
+      font-size: 6rem;
+      font-weight: bold;
+      margin: 40px 0;
+      letter-spacing: 5px;
+    }
+    .info {
+      font-size: 1.5rem;
+      margin: 20px 0;
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin: 40px 0;
+    }
+    button {
+      padding: 20px;
+      font-size: 2rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: linear-gradient(45deg, #ec4899, #a855f7);
+      color: white;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    }
+    button.keluar {
+      background: linear-gradient(45deg, #ef4444, #f97316);
+    }
+    .hint {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      opacity: 0.9;
+    }
+    .form-daftar {
+      margin: 30px 0;
+    }
+    input[type="text"] {
+      padding: 15px;
+      font-size: 1.5rem;
+      border-radius: 30px;
+      border: none;
+      width: 80%;
+      margin: 20px 0;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    button.save {
+      background: linear-gradient(45deg, #10b981, #34d399);
+    }
+    .analysis {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 1.3rem;
+    }
+    .waiting {
+      font-size: 2rem;
+      margin-top: 100px;
+    }
+  </style>
+  <link rel="stylesheet" href="app.css">
+
+</head>
+<body>
+  <div class="card" id="app">
+    <h1>Study Tracker</h1>
+    <p class="waiting">Menunggu anak tap kartu...</p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://buddylink-2af2c-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUID = '';
+
+    function formatTime(seconds) {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    db.ref("/currentUser").on("value", (snap) => {
+      const data = snap.val() || {};
+
+      if (data && data.active && data.uid) {
+        currentUID = data.uid;
+
+        db.ref("/users/" + currentUID + "/usn").once("value").then((userSnap) => {
+          const nama = userSnap.val() || "";
+
+          let html = `
+            <h1>Study Tracker</h1>
+            <div class="uid">UID: ${data.uid.substring(0,10)}...</div>
+          `;
+
+          if (!nama) {
+            // Kartu baru — hanya form daftar
+            html += `
+              <div class="form-daftar">
+                <p class="info">Kartu baru terdeteksi!</p>
+                <p class="info">Masukkan nama siswa:</p>
+                <input type="text" id="namaInput" placeholder="Contoh: Ahmad">
+                <button class="save" onclick="simpanNama()">Simpan Nama</button>
+              </div>
+            `;
+          } else {
+            // Nama sudah ada
+            html += `
+              <div class="welcome">Selamat datang, ${nama}!</div>
+              <div class="status">BELAJAR</div>
+              <div class="timer" id="countdown">00:00</div>
+              <div class="info">Jatah Istirahat: <strong id="breaksLeft">3</strong></div>
+            `;
+
+            if (data.mode === 0) {
+              html += `
+                <p class="info">Pilih durasi belajar:</p>
+                <div class="buttons">
+                  <button onclick="pilihMode(1)">1 Jam</button>
+                  <button onclick="pilihMode(2)">2 Jam</button>
+                  <button onclick="pilihMode(3)">3 Jam</button>
+                </div>
+                <p class="hint">Setelah pilih, tap kartu lagi untuk mulai</p>
+              `;
+            } else {
+              html += `
+                <div class="buttons">
+                  <button class="keluar" onclick="keluarSesi()">Keluar Sesi</button>
+                </div>
+              `;
+            }
+
+            html += '<div class="analysis" id="analysis">Loading analisis...</div>';
+          }
+
+          document.getElementById("app").innerHTML = html;
+
+          // Real-time timer
+          db.ref("/currentUser/remainingTime").on("value", (snap) => {
+            const seconds = snap.val() || 0;
+            const timerEl = document.getElementById("countdown");
+            if (timerEl) timerEl.innerText = formatTime(seconds);
+          });
+
+          // Real-time jatah istirahat
+          db.ref("/currentUser/breaksLeft").on("value", (snap) => {
+            const breaksEl = document.getElementById("breaksLeft");
+            if (breaksEl) breaksEl.innerText = snap.val() || 3;
+          });
+
+          // Load analisis
+          loadAnalysis(currentUID);
+        });
+      } else {
+        document.getElementById("app").innerHTML = `
+          <h1>Study Tracker</h1>
+          <p class="waiting">Menunggu anak tap kartu...</p>
+        `;
+      }
+    });
+
+    function simpanNama() {
+      const nama = document.getElementById("namaInput").value.trim();
+      if (!nama) return alert("Nama harus diisi!");
+      db.ref("/users/" + currentUID + "/usn").set(nama).then(() => {
+        alert("Nama '" + nama + "' berhasil disimpan!");
+      }).catch((err) => {
+        alert("Gagal simpan: " + err.message);
+      });
+    }
+
+    function pilihMode(mode) {
+      db.ref("/currentUser/mode").set(mode);
+    }
+
+    function keluarSesi() {
+      if (confirm("Yakin keluar sesi? Sesi ini TIDAK TUNTAS.")) {
+        db.ref("/currentUser/outRequested").set(true);
+      }
+    }
+
+    function loadAnalysis(uid) {
+      if (!uid) return;
+      db.ref('history/' + uid).once('value').then(snap => {
+        const history = snap.val() || {};
+        let totalSeconds = 0;
+        let tuntasCount = 0;
+        let totalSesi = Object.keys(history).length;
+
+        Object.values(history).forEach(s => {
+          totalSeconds += s.durationKepake || 0;
+          if (s.tuntas) tuntasCount++;
+        });
+
+        const hours = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+
+        const analysisEl = document.getElementById('analysis');
+        if (analysisEl) {
+          analysisEl.innerHTML = `
+            <strong>Analisis Belajar</strong><br>
+            Total Waktu: ${hours} jam ${mins} menit<br>
+            Sesi Tuntas: ${tuntasCount} dari ${totalSesi}
+          `;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

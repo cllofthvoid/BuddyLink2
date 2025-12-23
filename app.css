@@ -1,0 +1,139 @@
+/* =========================
+   RESPONSIVE DESIGN
+   ========================= */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .card {
+    padding: 30px;
+    border-radius: 24px;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+  }
+
+  .timer {
+    font-size: 5rem;
+  }
+
+  button {
+    font-size: 1.8rem;
+    padding: 18px;
+  }
+}
+
+/* Mobile besar */
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 25px;
+    border-radius: 22px;
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .welcome {
+    font-size: 1.8rem;
+  }
+
+  .status {
+    font-size: 2.2rem;
+  }
+
+  .timer {
+    font-size: 4rem;
+    letter-spacing: 3px;
+  }
+
+  .info {
+    font-size: 1.3rem;
+  }
+
+  input[type="text"] {
+    font-size: 1.3rem;
+    width: 100%;
+  }
+
+  button {
+    font-size: 1.6rem;
+    padding: 16px;
+  }
+
+  .analysis {
+    font-size: 1.2rem;
+  }
+}
+
+/* Mobile kecil */
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .welcome {
+    font-size: 1.6rem;
+  }
+
+  .status {
+    font-size: 2rem;
+  }
+
+  .timer {
+    font-size: 3.2rem;
+    margin: 25px 0;
+  }
+
+  .info {
+    font-size: 1.1rem;
+  }
+
+  .uid {
+    font-size: 1rem;
+  }
+
+  button {
+    font-size: 1.4rem;
+    padding: 14px;
+  }
+
+  .buttons {
+    gap: 15px;
+  }
+
+  .analysis {
+    font-size: 1.1rem;
+    padding: 15px;
+  }
+
+  .waiting {
+    font-size: 1.5rem;
+  }
+}
+
+/* Layar sangat kecil (HP jadul) */
+@media (max-width: 360px) {
+  .timer {
+    font-size: 2.8rem;
+  }
+
+  button {
+    font-size: 1.2rem;
+    padding: 12px;
+  }
+}
